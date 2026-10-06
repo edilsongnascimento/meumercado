@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#18794e">
+    <meta name="description" content="Organize sua lista e registre suas compras de supermercado.">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Meu Mercado</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="icon" href="./icon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <header class="topo">
+        <div class="marca"><span aria-hidden="true">🛒</span><h1>Meu Mercado</h1></div>
+        <p id="subtitulo">Sua lista de compras, sempre à mão.</p>
+    </header>
+
+    <main class="container">
+        <section id="pagina-lista" class="pagina" aria-labelledby="titulo-lista">
+            <div class="titulo-pagina">
+                <div><p class="sobretitulo">ORGANIZE SUAS COMPRAS</p><h2 id="titulo-lista">Lista de compras</h2></div>
+                <span id="contador-lista" class="contador">0 itens</span>
+            </div>
+            <div class="controles-mes-lista">
+                <div>
+                    <label for="mes-lista">Mês da lista</label>
+                    <select id="mes-lista"></select>
+                </div>
+                <button id="copiar-proximo-mes" class="botao-secundario" type="button">Copiar para o próximo mês</button>
+            </div>
+            <section class="total-lista" aria-live="polite">
+                <span>Total estimado da lista</span>
+                <strong id="total-estimado">R$ 0,00</strong>
+                <small>Calculado pelos últimos preços registrados; itens sem preço ficam fora do total.</small>
+            </section>
+            <label for="busca-lista">Buscar produto</label>
+            <div class="campo-busca">
+                <input id="busca-lista" type="search" placeholder="Nome ou código de barras" autocomplete="off">
+                <button type="button" class="botao-camera" data-scanner="busca-lista" aria-label="Ler código de barras com a câmera">▣</button>
+            </div>
+            <div id="sugestoes-lista" class="sugestoes" role="listbox" hidden></div>
+            <form id="form-item-lista" class="form-inline">
+                <label class="sr-only" for="quantidade-lista">Quantidade</label>
+                <input id="quantidade-lista" type="number" min="0.01" step="any" value="1" aria-label="Quantidade">
+                <button class="botao-principal" type="submit">Adicionar à lista</button>
+            </form>
+            <p class="ajuda">Toque no produto encontrado para adicioná-lo à lista.</p>
+            <div id="lista-compras" class="lista-categorias"></div>
+            <p id="vazio-lista" class="estado-vazio">Sua lista está vazia. Busque um produto acima.</p>
+        </section>
+
+        <section id="pagina-compras" class="pagina" aria-labelledby="titulo-compras" hidden>
+            <div class="titulo-pagina">
+                <div><p class="sobretitulo">REGISTRE OS PREÇOS</p><h2 id="titulo-compras">Produtos comprados</h2></div>
+            </div>
+            <label for="supermercado-compra">Supermercado</label>
+            <select id="supermercado-compra" required></select>
+            <p class="texto-intro">Pesquise ou leia o código de barras. O último preço registrado aparece para ajudar na comparação.</p>
+            <label for="busca-compra">Buscar produto</label>
+            <div class="campo-busca">
+                <input id="busca-compra" type="search" placeholder="Nome ou código de barras" autocomplete="off">
+                <button type="button" class="botao-camera" data-scanner="busca-compra" aria-label="Ler código de barras com a câmera">▣</button>
+            </div>
+            <div id="sugestoes-compra" class="sugestoes" role="listbox" hidden></div>
+            <div id="produto-selecionado" class="produto-selecionado" hidden></div>
+            <form id="form-registro-compra" class="cartao-formulario" hidden>
+                <label for="preco-compra">Preço atual (R$)</label>
+                <input id="preco-compra" type="number" min="0.01" step="0.01" placeholder="0,00" required>
+                <button class="botao-principal" type="submit">Registrar compra</button>
+            </form>
+            <div class="titulo-lista"><h3>Últimas compras</h3></div>
+            <div id="historico-compras" class="lista-itens"></div>
+            <p id="vazio-historico" class="estado-vazio">Nenhuma compra registrada ainda.</p>
+        </section>
+
+        <section id="pagina-cadastros" class="pagina" aria-labelledby="titulo-cadastros" hidden>
+            <div class="titulo-pagina">
+                <div><p class="sobretitulo">PERSONALIZE SEU MERCADO</p><h2 id="titulo-cadastros">Cadastros</h2></div>
+            </div>
+            <section class="cartao-formulario">
+                <h3>Produto</h3>
+                <form id="form-produto">
+                    <label for="nome-produto">Nome do produto</label>
+                    <input id="nome-produto" type="text" placeholder="Ex.: Leite integral" required>
+                    <label for="codigo-produto">Código de barras <span class="opcional">(opcional)</span></label>
+                    <div class="campo-busca">
+                        <input id="codigo-produto" type="text" inputmode="numeric" placeholder="Digite ou leia o código">
+                        <button type="button" class="botao-camera" data-scanner="codigo-produto" aria-label="Ler código de barras com a câmera">▣</button>
+                    </div>
+                    <label for="categoria-produto">Categoria</label>
+                    <select id="categoria-produto"></select>
+                    <button class="botao-principal" type="submit">Salvar produto</button>
+                </form>
+                <div id="cadastro-produtos" class="lista-cadastros"></div>
+            </section>
+            <section class="cartao-formulario">
+                <h3>Supermercado</h3>
+                <form id="form-supermercado" class="form-inline">
+                    <label class="sr-only" for="nome-supermercado">Nome do supermercado</label>
+                    <input id="nome-supermercado" type="text" placeholder="Ex.: Mercado do bairro" required>
+                    <button class="botao-secundario" type="submit">Adicionar</button>
+                </form>
+                <div id="cadastro-supermercados" class="lista-cadastros"></div>
+            </section>
+            <section class="cartao-formulario">
+                <h3>Categoria</h3>
+                <form id="form-categoria" class="form-inline">
+                    <label class="sr-only" for="nome-categoria">Nome da categoria</label>
+                    <input id="nome-categoria" type="text" placeholder="Ex.: Hortifruti" required>
+                    <button class="botao-secundario" type="submit">Adicionar</button>
+                </form>
+                <div id="cadastro-categorias" class="lista-cadastros"></div>
+            </section>
+        </section>
+    </main>
+
+    <footer class="rodape">
+        <nav class="navegacao" aria-label="Navegação principal">
+            <button type="button" class="nav-item ativo" data-pagina="lista" aria-current="page"><span aria-hidden="true">☷</span><span>Lista</span></button>
+            <button type="button" class="nav-item" data-pagina="compras"><span aria-hidden="true">＋</span><span>Compras</span></button>
+            <button type="button" class="nav-item" data-pagina="cadastros"><span aria-hidden="true">⚙</span><span>Cadastros</span></button>
+        </nav>
+        <details class="backup">
+            <summary>Backup dos dados</summary>
+            <div class="backup-acoes">
+                <button type="button" id="btn-exportar">Baixar backup</button>
+                <button type="button" id="btn-importar">Restaurar backup</button>
+            </div>
+            <p id="status-backup" role="status">Os dados são salvos neste dispositivo.</p>
+        </details>
+    </footer>
+
+    <dialog id="dialogo-scanner" class="dialogo-scanner">
+        <div class="scanner-cabecalho"><h2>Ler código de barras</h2><button id="fechar-scanner" type="button" aria-label="Fechar leitor">✕</button></div>
+        <video id="video-scanner" autoplay muted playsinline></video>
+        <p id="status-scanner" role="status">Aponte a câmera para o código de barras.</p>
+    </dialog>
+    <script src="./app.js"></script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", function () {
+                navigator.serviceWorker.register("./sw.js").catch(function (erro) {
+                    console.error("Erro ao registrar Service Worker:", erro);
+                });
+            });
+        }
+    </script>
+</body>
+</html>
