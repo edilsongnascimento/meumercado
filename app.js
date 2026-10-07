@@ -113,6 +113,7 @@ function validarEstado(dados) {
         dados.purchases.some(function (item) {
             return !textoValido(item.productId) || !idsPorColecao.products.has(item.productId) ||
                 !Number.isFinite(Number(item.price)) || Number(item.price) <= 0 ||
+                (item.quantity !== undefined && (!Number.isFinite(Number(item.quantity)) || Number(item.quantity) <= 0)) ||
                 !textoValido(item.supermarketId) || !textoValido(item.date) ||
                 (item.supermarketId && !idsPorColecao.supermarkets.has(item.supermarketId)) ||
                 !Number.isFinite(new Date(item.date).getTime());
@@ -124,6 +125,9 @@ function validarEstado(dados) {
     validado.shoppingList.forEach(function (item) {
         if (!item.month) item.month = obterMesAtual();
     });
+    validado.purchases.forEach(function (item) {
+        if (item.quantity === undefined) item.quantity = 1;
+    });
     validado.lastSupermarketId = typeof dados.lastSupermarketId === "string" &&
         idsPorColecao.supermarkets.has(dados.lastSupermarketId)
         ? dados.lastSupermarketId
@@ -133,6 +137,10 @@ function validarEstado(dados) {
 
 function formatarMoeda(valor) {
     return Number(valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+function formatarQuantidade(valor) {
+    return Number(valor).toLocaleString("pt-BR", { maximumFractionDigits: 3 });
 }
 
 function textoNormalizado(texto) {
@@ -320,7 +328,7 @@ function renderizarLista() {
                 const latest = obterPrecoMaisRecente(product.id);
                 row.className = `item-compra${item.bought ? " comprado" : ""}`;
                 title.textContent = product.name;
-                details.textContent = `Qtd.: ${item.quantity}${latest ? ` · Último preço: ${formatarMoeda(latest.price)}` : ""}`;
+                details.textContent = `Qtd.: ${formatarQuantidade(item.quantity)}${latest ? ` · Último preço: ${formatarMoeda(latest.price)} / un.` : ""}`;
                 info.className = "item-detalhes";
                 info.append(title, details);
                 row.appendChild(criarBotao(item.bought ? "✓" : "", "check-item", item.bought ? "Marcar como não comprado" : "Marcar como comprado", function () {
@@ -395,12 +403,14 @@ function selecionarProdutoCompra(product) {
     const detail = document.createElement("small");
     name.textContent = product.name;
     detail.textContent = latest
-        ? `Último preço: ${formatarMoeda(latest.price)} · ${new Date(latest.date).toLocaleDateString("pt-BR")}${obterSupermercado(latest.supermarketId) ? ` · ${obterSupermercado(latest.supermarketId).name}` : ""}`
+        ? `Último preço: ${formatarMoeda(latest.price)} por unidade · ${new Date(latest.date).toLocaleDateString("pt-BR")}${obterSupermercado(latest.supermarketId) ? ` · ${obterSupermercado(latest.supermarketId).name}` : ""}`
         : "Ainda não há preço registrado para este produto.";
     selected.append(name, detail);
     selected.hidden = false;
     document.getElementById("form-registro-compra").dataset.productId = product.id;
+    document.getElementById("quantidade-compra").value = "1";
     document.getElementById("preco-compra").value = latest ? Number(latest.price).toFixed(2) : "";
+    document.getElementById("btn-registrar-compra").disabled = false;
 }
 
 function renderizarHistorico() {
@@ -464,8 +474,8 @@ function renderizarHistorico() {
                 const supermarket = obterSupermercado(purchase.supermarketId);
                 row.className = "registro-compra";
                 name.textContent = product.name;
-                details.textContent = `${supermarket ? supermarket.name : "Supermercado não informado"} · ${new Date(purchase.date).toLocaleDateString("pt-BR")}`;
-                price.textContent = formatarMoeda(purchase.price);
+                details.textContent = `Qtd.: ${formatarQuantidade(purchase.quantity || 1)} · ${supermarket ? supermarket.name : "Supermercado não informado"} · ${new Date(purchase.date).toLocaleDateString("pt-BR")}`;
+                price.textContent = `${formatarMoeda(purchase.price)} / un.`;
                 info.append(name, details);
                 row.append(info, price);
                 comprasGrupo.appendChild(row);
@@ -717,9 +727,17 @@ function configurarEventos() {
         const form = event.currentTarget;
         const productId = form.dataset.productId;
         const price = Number(document.getElementById("preco-compra").value);
+        const quantity = Number(document.getElementById("quantidade-compra").value);
         const supermarketId = document.getElementById("supermercado-compra").value;
-        if (!obterProduto(productId) || !Number.isFinite(price) || price <= 0 || !supermarketId) {
-            alert("Selecione um produto e um supermercado e informe um preço válido.");
+        if (
+            !obterProduto(productId) ||
+            !Number.isFinite(price) ||
+            price <= 0 ||
+            !Number.isFinite(quantity) ||
+            quantity <= 0 ||
+            !supermarketId
+        ) {
+            alert("Selecione um produto e um supermercado e informe uma quantidade e um preço válidos.");
             return;
         }
         estado.lastSupermarketId = supermarketId;
@@ -727,6 +745,7 @@ function configurarEventos() {
             id: criarId(),
             productId: productId,
             price: price,
+            quantity: quantity,
             supermarketId: supermarketId,
             date: new Date().toISOString()
         });
@@ -747,6 +766,7 @@ function configurarEventos() {
             });
         }
         form.reset();
+        document.getElementById("quantidade-compra").value = "1";
         form.hidden = true;
         document.getElementById("produto-selecionado").hidden = true;
         document.getElementById("busca-compra").value = "";
