@@ -1,4 +1,4 @@
-const CACHE_NAME = "meu-mercado-v11";
+const CACHE_NAME = "meu-mercado-v12";
 
 const ARQUIVOS = [
     "./",
@@ -53,13 +53,27 @@ self.addEventListener("fetch", function (event) {
     }
 
     event.respondWith(
-
-        caches.match(event.request)
+        fetch(event.request)
             .then(function (resposta) {
-
-                return resposta || fetch(event.request);
-
+                if (!resposta.ok) {
+                    return resposta;
+                }
+                return caches.open(CACHE_NAME)
+                    .then(function (cache) {
+                        return cache.put(event.request, resposta.clone())
+                            .then(function () { return resposta; });
+                    })
+                    .catch(function (erro) {
+                        console.error("Não foi possível atualizar o cache offline:", erro);
+                        return resposta;
+                    });
             })
-
+            .catch(async function (erro) {
+                const respostaEmCache = await caches.match(event.request);
+                if (respostaEmCache) {
+                    return respostaEmCache;
+                }
+                throw erro;
+            })
     );
 });
