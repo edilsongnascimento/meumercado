@@ -57,7 +57,7 @@
             </div>
             <label for="supermercado-compra">Supermercado</label>
             <select id="supermercado-compra" required></select>
-            <p class="texto-intro">Pesquise ou leia o código de barras. O último preço registrado aparece para ajudar na comparação.</p>
+            <p class="texto-intro">Pesquise ou leia o código de barras. Toque no produto encontrado para informar a quantidade e o preço unitário e lançar a compra.</p>
             <label for="busca-compra">Buscar produto</label>
             <div class="campo-busca">
                 <input id="busca-compra" type="search" placeholder="Nome ou código de barras" autocomplete="off">
@@ -66,6 +66,7 @@
             <div id="sugestoes-compra" class="sugestoes" role="listbox" hidden></div>
             <div id="produto-selecionado" class="produto-selecionado" hidden></div>
             <form id="form-registro-compra" class="cartao-formulario formulario-compra" hidden>
+                <h3>Registrar compra</h3>
                 <label for="quantidade-compra">Quantidade comprada</label>
                 <input id="quantidade-compra" type="number" min="0.01" step="any" value="1" required>
                 <label for="preco-compra">Preço atual por unidade (R$)</label>

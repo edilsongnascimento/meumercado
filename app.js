@@ -415,7 +415,9 @@ function selecionarProdutoCompra(product) {
     detail.textContent = latest
         ? `Último preço: ${formatarMoeda(latest.price)} por unidade · ${new Date(latest.date).toLocaleDateString("pt-BR")}${obterSupermercado(latest.supermarketId) ? ` · ${obterSupermercado(latest.supermarketId).name}` : ""}`
         : "Ainda não há preço registrado para este produto.";
-    selected.append(name, detail);
+    const instruction = document.createElement("small");
+    instruction.textContent = "Informe a quantidade e o preço por unidade abaixo para lançar a compra.";
+    selected.append(name, detail, instruction);
     selected.hidden = false;
     document.getElementById("form-registro-compra").dataset.productId = product.id;
     document.getElementById("quantidade-compra").value = "1";
@@ -765,16 +767,17 @@ function configurarEventos() {
         });
         const itemLista = estado.shoppingList.find(function (item) {
             return item.productId === productId && item.month === obterMesAtual() && !item.bought;
+        }) || estado.shoppingList.find(function (item) {
+            return item.productId === productId && item.month === obterMesAtual();
         });
         if (itemLista) {
+            itemLista.quantity = quantity;
             itemLista.bought = true;
-        } else if (!estado.shoppingList.some(function (item) {
-            return item.productId === productId && item.month === obterMesAtual();
-        })) {
+        } else {
             estado.shoppingList.push({
                 id: criarId(),
                 productId: productId,
-                quantity: 1,
+                quantity: quantity,
                 bought: true,
                 month: obterMesAtual()
             });
