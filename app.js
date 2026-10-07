@@ -143,6 +143,16 @@ function formatarQuantidade(valor) {
     return Number(valor).toLocaleString("pt-BR", { maximumFractionDigits: 3 });
 }
 
+function atualizarTotalCompra() {
+    const quantidade = Number(document.getElementById("quantidade-compra").value);
+    const precoUnitario = Number(document.getElementById("preco-compra").value);
+    const total = quantidade * precoUnitario;
+    document.getElementById("total-compra").textContent =
+        Number.isFinite(total) && quantidade > 0 && precoUnitario > 0
+            ? formatarMoeda(total)
+            : formatarMoeda(0);
+}
+
 function textoNormalizado(texto) {
     return String(texto || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR").trim();
 }
@@ -410,6 +420,7 @@ function selecionarProdutoCompra(product) {
     document.getElementById("form-registro-compra").dataset.productId = product.id;
     document.getElementById("quantidade-compra").value = "1";
     document.getElementById("preco-compra").value = latest ? Number(latest.price).toFixed(2) : "";
+    atualizarTotalCompra();
     document.getElementById("btn-registrar-compra").disabled = false;
 }
 
@@ -474,8 +485,9 @@ function renderizarHistorico() {
                 const supermarket = obterSupermercado(purchase.supermarketId);
                 row.className = "registro-compra";
                 name.textContent = product.name;
-                details.textContent = `Qtd.: ${formatarQuantidade(purchase.quantity || 1)} · ${supermarket ? supermarket.name : "Supermercado não informado"} · ${new Date(purchase.date).toLocaleDateString("pt-BR")}`;
-                price.textContent = `${formatarMoeda(purchase.price)} / un.`;
+                const quantityValue = Number(purchase.quantity || 1);
+                details.textContent = `Qtd.: ${formatarQuantidade(quantityValue)} · ${formatarMoeda(purchase.price)} / un. · ${supermarket ? supermarket.name : "Supermercado não informado"} · ${new Date(purchase.date).toLocaleDateString("pt-BR")}`;
+                price.textContent = formatarMoeda(Number(purchase.price) * quantityValue);
                 info.append(name, details);
                 row.append(info, price);
                 comprasGrupo.appendChild(row);
@@ -722,6 +734,8 @@ function configurarEventos() {
         document.getElementById("produto-selecionado").hidden = true;
         renderizarSugestoes(event.currentTarget, document.getElementById("sugestoes-compra"), selecionarProdutoCompra);
     });
+    document.getElementById("quantidade-compra").addEventListener("input", atualizarTotalCompra);
+    document.getElementById("preco-compra").addEventListener("input", atualizarTotalCompra);
     document.getElementById("form-registro-compra").addEventListener("submit", function (event) {
         event.preventDefault();
         const form = event.currentTarget;
@@ -767,6 +781,7 @@ function configurarEventos() {
         }
         form.reset();
         document.getElementById("quantidade-compra").value = "1";
+        atualizarTotalCompra();
         form.hidden = true;
         document.getElementById("produto-selecionado").hidden = true;
         document.getElementById("busca-compra").value = "";

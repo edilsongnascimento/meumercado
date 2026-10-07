@@ -82,6 +82,8 @@ input:focus, select:focus { border-color: var(--verde); box-shadow: 0 0 0 3px #1
 .formulario-compra[hidden] { display: none; }
 .formulario-compra .botao-principal { min-height: 50px; margin-top: 20px; font-size: 16px; }
 .formulario-compra .botao-principal:disabled { cursor: not-allowed; opacity: .55; }
+.total-compra { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 18px 0 0; padding: 13px; border-radius: 10px; background: #eaf5ed; color: var(--texto-suave); font-size: 13px; font-weight: 650; }
+.total-compra strong { color: var(--verde-escuro); font-size: 18px; white-space: nowrap; }
 .titulo-lista { margin: 26px 0 11px; }
 .registro-compra { display: flex; justify-content: space-between; gap: 10px; padding: 13px; border-bottom: 1px solid #edf1ee; background: #fff; }
 .registro-compra strong, .registro-compra small { display: block; }

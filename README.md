@@ -7,7 +7,7 @@ Os ícones instaláveis do app estão disponíveis nos tamanhos PNG de 192×192 
 ## Páginas
 
 - **Lista:** mantenha uma lista separada por mês, com os meses exibidos em português; os produtos aparecem agrupados em categorias expansíveis. Pesquise produtos cadastrados por nome ou código de barras, adicione quantidades, marque itens como comprados e remova itens. O total estimado usa o último preço registrado para cada produto. Copie a lista para o próximo mês e edite os itens sem afetar a lista original.
-- **Compras:** selecione o supermercado (a última escolha fica como padrão), informe a quantidade comprada e o preço por unidade e use **Registrar compra** para salvar. O histórico recente, agrupado em categorias expansíveis, mostra quantidade, preço unitário, mercado e data. Ao registrar uma compra, o produto correspondente é marcado como comprado na lista; se ainda não estiver nela, é adicionado já marcado.
+- **Compras:** selecione o supermercado (a última escolha fica como padrão), informe a quantidade comprada e o preço por unidade; o total é calculado automaticamente e exibido no formulário e no histórico. Use **Registrar compra** para salvar. O histórico recente, agrupado em categorias expansíveis, mostra quantidade, preço unitário, total, mercado e data. Ao registrar uma compra, o produto correspondente é marcado como comprado na lista; se ainda não estiver nela, é adicionado já marcado.
 - **Cadastros:** mantenha seus produtos, códigos de barras, supermercados e categorias.
 
 ## Leitor de código de barras
