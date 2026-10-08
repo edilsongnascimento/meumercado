@@ -9,6 +9,7 @@ const CHAVE_CATEGORIAS = "meuMercadoCategorias";
 
 let produtos = [];
 let lista = [];
+let telaAtual = "lista";
 
 let produtoEditandoId = null;
 
@@ -308,56 +309,16 @@ function carregarDados() {
     );
 
 
-    // =================================================
-    // RECUPERA MARCAÇÕES ANTIGAS
-    // =================================================
+    const itensListaAnterior = Array.isArray(lista)
+        ? lista
+        : [];
 
-    const marcadosAntigos = {};
-
-
-    if (Array.isArray(lista)) {
-
-        lista.forEach(
-            item => {
-
-                if (
-                    item &&
-                    item.nome
-                ) {
-
-                    marcadosAntigos[
-                        item.nome
-                            .toLowerCase()
-                    ] =
-                        Boolean(
-                            item.comprado
-                        );
-
-                }
-
-            }
-        );
-
-    }
-
-
-    produtos.forEach(
-        produto => {
-
-            const nome =
-                produto.nome
-                    .toLowerCase();
-
-
-            if (
-                marcadosAntigos[nome]
-            ) {
-
-                produto.comprado = true;
-
-            }
-
-        }
+    lista = Array.from(
+        new Set(
+            itensListaAnterior
+                .filter(id => typeof id !== "object" && id !== null)
+                .filter(id => produtos.some(produto => produto.id === id))
+        )
     );
 
 
@@ -575,10 +536,10 @@ function mostrarMensagem(mensagem) {
 
 function mostrarProdutos() {
 
-    const container =
-        document.getElementById(
-            "listaProdutos"
-        );
+    const modoLista = telaAtual === "lista";
+    const container = document.getElementById(
+        modoLista ? "listaProdutos" : "catalogoProdutos"
+    );
 
 
     if (!container) {
@@ -588,10 +549,9 @@ function mostrarProdutos() {
     }
 
 
-    const campoPesquisa =
-        document.getElementById(
-            "pesquisa"
-        );
+    const campoPesquisa = document.getElementById(
+        modoLista ? "pesquisa" : "pesquisaProdutos"
+    );
 
 
     const termo =
@@ -602,56 +562,23 @@ function mostrarProdutos() {
             : "";
 
 
-    let encontrados =
-        produtos.filter(
-            produto => {
+    let encontrados = produtos.filter(produto => {
+        const nome = String(produto.nome || "").toLocaleLowerCase("pt-BR");
+        const codigo = String(produto.codigoBarras || "").toLocaleLowerCase("pt-BR");
+        const categoria = String(produto.categoria || "").toLocaleLowerCase("pt-BR");
+        const corresponde =
+            nome.includes(termo) ||
+            codigo.includes(termo) ||
+            categoria.includes(termo);
 
-                const nome =
-                    String(
-                        produto.nome || ""
-                    ).toLowerCase();
-
-
-                const codigo =
-                    String(
-                        produto.codigoBarras || ""
-                    ).toLowerCase();
-
-
-                const categoria =
-                    String(
-                        produto.categoria || ""
-                    ).toLowerCase();
-
-
-                return (
-
-                    nome.includes(termo) ||
-
-                    codigo.includes(termo) ||
-
-                    categoria.includes(termo)
-
-                );
-
-            }
-        );
-
+        return corresponde && (!modoLista || lista.includes(produto.id));
+    });
 
     encontrados.sort(
         (a, b) => {
-
-            if (
-                a.comprado !==
-                b.comprado
-            ) {
-
-                return a.comprado
-                    ? 1
-                    : -1;
-
+            if (modoLista && a.comprado !== b.comprado) {
+                return a.comprado ? 1 : -1;
             }
-
 
             return a.nome.localeCompare(
                 b.nome,
@@ -665,226 +592,69 @@ function mostrarProdutos() {
     container.innerHTML = "";
 
 
-    if (
-        encontrados.length === 0
-    ) {
-
-        container.innerHTML = `
-            <p class="lista-vazia">
-                Sua lista de compras está vazia.
-            </p>
-        `;
-
-
+    if (encontrados.length === 0) {
+        const mensagem = modoLista
+            ? "Sua lista está vazia. Acesse Produtos para escolher o que vai comprar."
+            : "Nenhum produto cadastrado.";
+        container.innerHTML = `<p class="lista-vazia">${mensagem}</p>`;
         atualizarResumo();
-
         return;
-
     }
 
-
-    // =================================================
-    // AGRUPAR POR CATEGORIA
-    // =================================================
-
     const grupos = Object.create(null);
-
-
-    encontrados.forEach(
-        produto => {
-
-            const categoria =
-                categorias[
-                    produto.categoria
-                ]
-                    ? produto.categoria
-                    : "Outros";
-
-
-            if (!grupos[categoria]) {
-
-                grupos[categoria] = [];
-
-            }
-
-
-            grupos[categoria].push(
-                produto
-            );
-
+    encontrados.forEach(produto => {
+        const categoria = categorias[produto.categoria]
+            ? produto.categoria
+            : "Outros";
+        if (!grupos[categoria]) {
+            grupos[categoria] = [];
         }
-    );
+        grupos[categoria].push(produto);
+    });
 
+    const categoriasExibidas = [
+        ...ordemCategorias,
+        ...Object.keys(categorias)
+            .filter(categoria => !ordemCategorias.includes(categoria))
+            .sort((a, b) => a.localeCompare(b, "pt-BR"))
+    ];
 
-    // =================================================
-    // CRIAR SETORES
-    // =================================================
-
-    ordemCategorias.forEach(
-        categoria => {
-
-            if (
-                !grupos[categoria] ||
-                grupos[categoria].length === 0
-            ) {
-
-                return;
-
-            }
-
-
-            const setor =
-                document.createElement(
-                    "section"
-                );
-
-
-            setor.className =
-                "setor";
-
-
-            const cabecalho =
-                document.createElement(
-                    "button"
-                );
-
-
-            cabecalho.type =
-                "button";
-
-
-            cabecalho.className =
-                "cabecalho-setor";
-
-
-            const quantidade =
-                grupos[categoria].length;
-
-
-            const emoji =
-                categorias[categoria] ||
-                "📦";
-
-
-            cabecalho.innerHTML = `
-
-                <span class="setor-nome">
-
-                    <span>
-                        ${escapar(emoji)}
-                    </span>
-
-                    <span>
-                        ${escapar(categoria)}
-                    </span>
-
-                </span>
-
-
-                <span class="setor-quantidade">
-
-                    ${quantidade}
-
-                    <span class="seta">
-                        ▼
-                    </span>
-
-                </span>
-
-            `;
-
-
-            const conteudo =
-                document.createElement(
-                    "div"
-                );
-
-
-            conteudo.className =
-                "conteudo-setor";
-
-
-            grupos[categoria].forEach(
-                produto => {
-
-                    conteudo.appendChild(
-                        criarProdutoElemento(
-                            produto
-                        )
-                    );
-
-                }
-            );
-
-
-            cabecalho.addEventListener(
-                "click",
-                () => {
-
-                    setor.classList.toggle(
-                        "fechado"
-                    );
-
-                }
-            );
-
-
-            setor.appendChild(
-                cabecalho
-            );
-
-
-            setor.appendChild(
-                conteudo
-            );
-
-
-            container.appendChild(
-                setor
-            );
-
+    categoriasExibidas.forEach(categoria => {
+        if (!grupos[categoria] || grupos[categoria].length === 0) {
+            return;
         }
-    );
 
-    Object.keys(categorias)
-        .filter(categoria => !ordemCategorias.includes(categoria))
-        .sort((a, b) => a.localeCompare(b, "pt-BR"))
-        .forEach(categoria => {
-            if (!grupos[categoria]) {
-                return;
-            }
+        const setor = document.createElement("section");
+        setor.className = "setor";
 
-            const setor = document.createElement("section");
-            setor.className = "setor";
+        const cabecalho = document.createElement("button");
+        cabecalho.type = "button";
+        cabecalho.className = "cabecalho-setor";
+        cabecalho.innerHTML = `
+            <span class="setor-nome">
+                <span>${escapar(categorias[categoria] || "📦")}</span>
+                <span>${escapar(categoria)}</span>
+            </span>
+            <span class="setor-quantidade">
+                ${grupos[categoria].length}
+                <span class="seta">▼</span>
+            </span>
+        `;
 
-            const cabecalho = document.createElement("button");
-            cabecalho.type = "button";
-            cabecalho.className = "cabecalho-setor";
-            cabecalho.innerHTML = `
-                <span class="setor-nome">
-                    <span>${escapar(categorias[categoria] || "📦")}</span>
-                    <span>${escapar(categoria)}</span>
-                </span>
-                <span class="setor-quantidade">
-                    ${grupos[categoria].length}
-                    <span class="seta">▼</span>
-                </span>
-            `;
-
-            const conteudo = document.createElement("div");
-            conteudo.className = "conteudo-setor";
-            grupos[categoria].forEach(produto => {
-                conteudo.appendChild(criarProdutoElemento(produto));
-            });
-
-            cabecalho.addEventListener("click", () => {
-                setor.classList.toggle("fechado");
-            });
-
-            setor.appendChild(cabecalho);
-            setor.appendChild(conteudo);
-            container.appendChild(setor);
+        const conteudo = document.createElement("div");
+        conteudo.className = "conteudo-setor";
+        grupos[categoria].forEach(produto => {
+            conteudo.appendChild(criarProdutoElemento(produto, modoLista));
         });
+
+        cabecalho.addEventListener("click", () => {
+            setor.classList.toggle("fechado");
+        });
+
+        setor.appendChild(cabecalho);
+        setor.appendChild(conteudo);
+        container.appendChild(setor);
+    });
 
     atualizarResumo();
 
@@ -895,157 +665,78 @@ function mostrarProdutos() {
 // CRIAR PRODUTO NA TELA
 // =====================================================
 
-function criarProdutoElemento(
-    produto
-) {
+function criarProdutoElemento(produto, modoLista) {
 
-    const item =
-        document.createElement(
-            "article"
-        );
+    const item = document.createElement("article");
+    const estaNaLista = lista.includes(produto.id);
 
-
-    item.className =
-        "produto" +
-        (
-            produto.comprado
-                ? " comprado"
-                : ""
-        );
+    item.className = `produto ${modoLista ? "produto-lista" : "produto-catalogo"}${modoLista && produto.comprado ? " comprado" : ""}`;
 
 
     item.innerHTML = `
-
-        <button
-            class="check ${
-                produto.comprado
-                    ? "marcado"
-                    : ""
-            }"
-            type="button"
-            title="Marcar como comprado">
-
-            ${
-                produto.comprado
-                    ? "✓"
-                    : ""
-            }
-
-        </button>
-
+        ${modoLista ? `
+            <button class="check ${produto.comprado ? "marcado" : ""}"
+                type="button" title="Marcar como comprado">
+                ${produto.comprado ? "✓" : ""}
+            </button>
+        ` : ""}
 
         <div class="produto-info">
-
-            <strong>
-                ${escapar(produto.nome)}
-            </strong>
-
-            ${
-                produto.codigoBarras
-
-                    ? `
-                        <small>
-                            🏷️
-                            ${escapar(
-                                produto.codigoBarras
-                            )}
-                        </small>
-                    `
-
-                    : `
-                        <small>
-                            Sem código de barras
-                        </small>
-                    `
-            }
-
+            <strong>${escapar(produto.nome)}</strong>
+            <small>${produto.codigoBarras
+                ? `🏷️ ${escapar(produto.codigoBarras)}`
+                : "Sem código de barras"}</small>
         </div>
-
 
         <div class="precos">
-
             <div>
-
-                <span>
-                    Último
-                </span>
-
-                <strong>
-                    ${moeda(
-                        produto.ultimoPreco
-                    )}
-                </strong>
-
+                <span>Último</span>
+                <strong>${moeda(produto.ultimoPreco)}</strong>
             </div>
-
-
             <div>
-
-                <span>
-                    Atual
-                </span>
-
-                <strong
-                    class="preco-atual">
-
-                    ${moeda(
-                        produto.precoAtual
-                    )}
-
-                </strong>
-
+                <span>Atual</span>
+                <strong class="preco-atual">${moeda(produto.precoAtual)}</strong>
             </div>
-
         </div>
-
 
         <button
             class="btn-editar"
             type="button"
-            title="Alterar preço">
-
-            ✏️
-
+            title="Alterar preço">✏️
         </button>
 
+        <div class="produto-acoes">
+            ${modoLista
+                ? `<button class="btn-remover-lista" type="button">Remover da lista</button>`
+                : `<button class="btn-alternar-lista ${estaNaLista ? "selecionado" : ""}" type="button">
+                    ${estaNaLista ? "✓ Na lista de compras" : "+ Adicionar à lista"}
+                   </button>`}
+        </div>
     `;
 
 
     const botaoCheck =
-        item.querySelector(
-            ".check"
-        );
+        item.querySelector(".check");
 
-
-    botaoCheck.addEventListener(
-        "click",
-        () => {
-
-            alternarComprado(
-                produto.id
-            );
-
-        }
-    );
+    if (botaoCheck) {
+        botaoCheck.addEventListener("click", () => {
+            alternarComprado(produto.id);
+        });
+    }
 
 
     const botaoEditar =
-        item.querySelector(
-            ".btn-editar"
-        );
+        item.querySelector(".btn-editar");
+    botaoEditar.addEventListener("click", () => {
+        editarPreco(produto.id);
+    });
 
-
-    botaoEditar.addEventListener(
-        "click",
-        () => {
-
-            editarPreco(
-                produto.id
-            );
-
-        }
+    const botaoLista = item.querySelector(
+        ".btn-alternar-lista, .btn-remover-lista"
     );
-
+    botaoLista.addEventListener("click", () => {
+        alternarNaLista(produto.id);
+    });
 
     return item;
 
@@ -1063,6 +754,15 @@ function atualizarResumo() {
             "totalProdutos"
         );
 
+    const totalNaLista =
+        document.getElementById(
+            "totalNaLista"
+        );
+
+    const totalProdutosNaLista =
+        document.getElementById(
+            "totalProdutosNaLista"
+        );
 
     const comprados =
         document.getElementById(
@@ -1077,14 +777,25 @@ function atualizarResumo() {
 
     }
 
+    if (totalNaLista) {
+
+        totalNaLista.textContent =
+            lista.length;
+
+    }
+
+    if (totalProdutosNaLista) {
+
+        totalProdutosNaLista.textContent =
+            lista.length;
+
+    }
 
     if (comprados) {
 
-        comprados.textContent =
-            produtos.filter(
-                produto =>
-                    produto.comprado
-            ).length;
+        comprados.textContent = produtos.filter(
+            produto => lista.includes(produto.id) && produto.comprado
+        ).length;
 
     }
 
@@ -1106,15 +817,11 @@ function alternarComprado(
         );
 
 
-    if (!produto) {
-
+    if (!produto || !lista.includes(produto.id)) {
         return;
-
     }
 
-
-    produto.comprado =
-        !produto.comprado;
+    produto.comprado = !produto.comprado;
 
 
     salvarDados();
@@ -1131,14 +838,11 @@ function alternarComprado(
 
 function desmarcarTodos() {
 
-    produtos.forEach(
-        produto => {
-
-            produto.comprado =
-                false;
-
-        }
-    );
+    produtos
+        .filter(produto => lista.includes(produto.id))
+        .forEach(produto => {
+            produto.comprado = false;
+        });
 
 
     salvarDados();
@@ -1154,44 +858,37 @@ function desmarcarTodos() {
 }
 
 
+function alternarNaLista(id) {
+
+    const produto = produtos.find(item => item.id === id);
+
+    if (!produto) {
+        return;
+    }
+
+    if (lista.includes(id)) {
+        lista = lista.filter(itemId => itemId !== id);
+        produto.comprado = false;
+        mostrarMensagem("Produto removido da lista de compras.");
+    } else {
+        lista.push(id);
+        produto.comprado = false;
+        mostrarMensagem("Produto adicionado à lista de compras.");
+    }
+
+    salvarDados();
+    mostrarProdutos();
+
+}
+
+
 // =====================================================
 // ABRIR CADASTRO
 // =====================================================
 
 function abrirCadastro() {
 
-    const telaLista =
-        document.getElementById(
-            "telaLista"
-        );
-
-    const telaCadastro =
-        document.getElementById(
-            "telaCadastro"
-        );
-
-
-    if (telaLista) {
-
-        telaLista.classList.remove(
-            "ativa"
-        );
-
-    }
-
-
-    if (telaCadastro) {
-
-        telaCadastro.classList.add(
-            "ativa"
-        );
-
-    }
-
-    const botoes = document.querySelectorAll(".nav-item");
-    botoes.forEach(botao => {
-        botao.classList.toggle("active", botao.textContent.includes("Novo"));
-    });
+    mostrarTela("cadastro");
 
 
     const categoria =
@@ -1237,38 +934,7 @@ function abrirCadastro() {
 
 function fecharCadastro() {
 
-    const telaLista =
-        document.getElementById(
-            "telaLista"
-        );
-
-    const telaCadastro =
-        document.getElementById(
-            "telaCadastro"
-        );
-
-
-    if (telaLista) {
-
-        telaLista.classList.add(
-            "ativa"
-        );
-
-    }
-
-
-    if (telaCadastro) {
-
-        telaCadastro.classList.remove(
-            "ativa"
-        );
-
-    }
-
-    const botoes = document.querySelectorAll(".nav-item");
-    botoes.forEach(botao => {
-        botao.classList.toggle("active", botao.textContent.includes("Lista"));
-    });
+    mostrarTela("lista");
 
 }
 
@@ -1430,31 +1096,17 @@ function salvarNovoProduto() {
     );
 
 
-    lista.push({
-
-        id: novoProduto.id,
-
-        nome: novoProduto.nome,
-
-        comprado: false
-
-    });
-
-
     salvarDados();
 
 
     limparFormulario();
 
 
-    fecharCadastro();
-
-
-    mostrarProdutos();
+    mostrarTela("produtos");
 
 
     mostrarMensagem(
-        "Produto cadastrado com sucesso!"
+        "Produto cadastrado. Você pode adicioná-lo à sua lista de compras."
     );
 
 }
@@ -1753,18 +1405,22 @@ function configurarPesquisa() {
             "pesquisa"
         );
 
+    const pesquisaProdutos =
+        document.getElementById(
+            "pesquisaProdutos"
+        );
 
-    if (!pesquisa) {
+    if (!pesquisa && !pesquisaProdutos) {
 
         return;
 
     }
 
-
-    pesquisa.addEventListener(
-        "input",
-        mostrarProdutos
-    );
+    [pesquisa, pesquisaProdutos]
+        .filter(Boolean)
+        .forEach(campo => {
+            campo.addEventListener("input", mostrarProdutos);
+        });
 
 }
 
@@ -1957,9 +1613,11 @@ function processarCodigo(
 
     }
 
+    if (!lista.includes(produto.id)) {
+        lista.push(produto.id);
+    }
 
-    produto.comprado =
-        !produto.comprado;
+    produto.comprado = true;
 
 
     salvarDados();
@@ -1977,9 +1635,7 @@ function processarCodigo(
     if (status) {
 
         status.textContent =
-            produto.comprado
-                ? `✓ ${produto.nome} marcado como comprado.`
-                : `${produto.nome} desmarcado.`;
+            `✓ ${produto.nome} marcado como comprado.`;
 
     }
 
@@ -2161,14 +1817,21 @@ function configurarModais() {
 function mostrarTela(nomeTela) {
 
     const telaLista = document.getElementById("telaLista");
+    const telaProdutos = document.getElementById("telaProdutos");
     const telaCadastro = document.getElementById("telaCadastro");
     const botoes = document.querySelectorAll(".nav-item");
 
-    const listaAtiva = nomeTela === "lista" || nomeTela === "produtos";
+    telaAtual = nomeTela;
+    const listaAtiva = nomeTela === "lista";
+    const produtosAtiva = nomeTela === "produtos";
     const cadastroAtivo = nomeTela === "cadastro";
 
     if (telaLista) {
         telaLista.classList.toggle("ativa", listaAtiva);
+    }
+
+    if (telaProdutos) {
+        telaProdutos.classList.toggle("ativa", produtosAtiva);
     }
 
     if (telaCadastro) {
@@ -2185,7 +1848,7 @@ function mostrarTela(nomeTela) {
         botao.classList.toggle("active", ativa);
     });
 
-    if (listaAtiva) {
+    if (listaAtiva || produtosAtiva) {
         mostrarProdutos();
     }
 

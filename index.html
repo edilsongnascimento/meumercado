@@ -29,7 +29,7 @@
 
     <link
         rel="stylesheet"
-        href="./style.css?v=20261007-2">
+        href="./style.css?v=20261007-3">
 
 </head>
 
@@ -98,12 +98,12 @@
 
                 <div class="resumo-item">
 
-                    <strong id="totalProdutos">
+                    <strong id="totalNaLista">
                         0
                     </strong>
 
                     <span>
-                        Produtos
+                        Na lista
                     </span>
 
                 </div>
@@ -136,13 +136,54 @@
 
                 <div id="listaProdutos">
 
-                    Nenhum produto cadastrado.
+                    Sua lista de compras está vazia.
 
                 </div>
 
             </section>
 
         </div>
+
+        <section id="telaProdutos" class="tela">
+
+            <section class="barra-acoes">
+
+                <input
+                    type="search"
+                    id="pesquisaProdutos"
+                    class="pesquisa"
+                    placeholder="🔎 Buscar no catálogo..."
+                    oninput="mostrarProdutos()">
+
+            </section>
+
+            <section class="resumo">
+
+                <div class="resumo-item">
+                    <strong id="totalProdutos">0</strong>
+                    <span>Produtos cadastrados</span>
+                </div>
+
+                <div class="resumo-item">
+                    <strong id="totalProdutosNaLista">0</strong>
+                    <span>Na lista de compras</span>
+                </div>
+
+            </section>
+
+            <section class="lista-area">
+
+                <div class="titulo-lista">
+                    <h2>Todos os produtos</h2>
+                </div>
+
+                <div id="catalogoProdutos">
+                    Nenhum produto cadastrado.
+                </div>
+
+            </section>
+
+        </section>
 
 
         <section id="telaCadastro" class="tela cadastro-screen">
@@ -423,7 +464,7 @@
     <!-- APLICAÇÃO -->
     <!-- ================================================= -->
 
-    <script src="./app.js?v=20261007-2"></script>
+    <script src="./app.js?v=20261007-3"></script>
 
 
 </body>
